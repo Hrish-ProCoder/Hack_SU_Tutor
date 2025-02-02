@@ -1,6 +1,7 @@
 import React from "react";
 import Navbar from "../components/Navbar";
 import { Container, Typography } from "@mui/material";
+import FlashcardsPage from "../components/FlashcardsPage";
 
 const Flashcards = () => {
   return (
@@ -10,10 +11,12 @@ const Flashcards = () => {
         <Typography variant="h4" align="center" gutterBottom>
           Flashcards
         </Typography>
-        {/* Add your flashcards content here */}
+        <FlashcardsPage /> {/* This renders the flashcards component */}
       </Container>
     </>
   );
 };
 
-export default Flashcards;
+export default Flashcards; 
+
+
