@@ -2,8 +2,13 @@ import React from "react";
 import Navbar from "../components/Navbar";
 import { Container, Typography } from "@mui/material";
 import FlashcardsPage from "../components/FlashcardsPage";
+import { useLocation } from 'react-router-dom';
 
 const Flashcards = () => {
+  const location = useLocation();
+  console.log(location.state);
+  const flashcardsData = location.state?.flashcardsData || [];
+
   return (
     <>
       <Navbar />
@@ -11,12 +16,12 @@ const Flashcards = () => {
         <Typography variant="h4" align="center" gutterBottom>
           Flashcards
         </Typography>
-        <FlashcardsPage /> {/* This renders the flashcards component */}
+        <FlashcardsPage flashcardsData={flashcardsData} />
       </Container>
     </>
   );
 };
 
-export default Flashcards; 
+export default Flashcards;
 
 

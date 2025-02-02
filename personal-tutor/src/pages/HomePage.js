@@ -16,8 +16,11 @@ import {
   InputLabel,
   CircularProgress,
   Paper,
-  Typography
+  Typography,
+  Button
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import SchoolIcon from '@mui/icons-material/School';
 
 const mainTopics = {
   Science: ["Physics", "Biology", "Chemistry", "Astronomy"],
@@ -38,6 +41,7 @@ const HomePage = () => {
   const [language, setLanguage] = useState("English");
   // Add new state
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {console.log("Search term changed:", searchTerm);}, [searchTerm]);
   // Update handleSearch function
@@ -68,6 +72,7 @@ const HomePage = () => {
     .then(([flashcardsRes, explanationRes]) => {
       setFlashcards(flashcardsRes.data);
       setHtmlContent(explanationRes.data.genAI_response);
+      // Remove navigation
     })
     .catch((error) => {
       console.error("Error:", error);
@@ -96,13 +101,18 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    console.log("Flashcards changed:", htmlContent.genAI_response);
+    // console.log("Flashcards changed:", htmlContent.genAI_response);
     }
     , [htmlContent]);
+    useEffect(() => {
+        console.log("Flashcards changed:", flashcards);
+        }
+        , [flashcards]);
+    
 
   return (
     <>
-      <Navbar />
+      <Navbar  />
       <Container 
         sx={{
           py: 4,  // padding top/bottom
@@ -251,6 +261,7 @@ const HomePage = () => {
               backgroundColor: '#f5f5f5',
               borderRadius: 2,
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              position: 'relative', // Add this for absolute positioning of button
               '& h2': {
                 color: '#333',
                 marginBottom: 2
@@ -263,7 +274,25 @@ const HomePage = () => {
               }
             }}
           >
-            {/* <div>HIU</div> */}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                zIndex: 1
+              }}
+            >
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => navigate('/flashcards', { 
+                  state: { flashcardsData: flashcards }
+                })}
+                startIcon={<SchoolIcon />}
+              >
+                View Flashcards
+              </Button>
+            </Box>
             <ReactMarkdown>
               {htmlContent.genAI_response || htmlContent}
             </ReactMarkdown>

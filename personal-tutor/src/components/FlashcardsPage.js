@@ -1,107 +1,278 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { Typography, Container, Grid, Card, CardContent } from "@mui/material";
-import "./Flashcards.css"; // Ensure this file contains updated styles
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Typography, Container, Grid, Card, CardContent,
+  Button, Box, LinearProgress, IconButton,
+  Chip, ButtonGroup
+} from "@mui/material";
+import {
+  NavigateNext,
+  NavigateBefore,
+  Check,
+  Close,
+  Refresh
+} from '@mui/icons-material';
 
-const flashcardsData = [
-  {
-    question: "What is Artificial Intelligence (AI)?",
-    answer: "AI is the simulation of human intelligence processes by machines, especially computer systems.",
-  },
-  {
-    question: "What are the main subfields of AI?",
-    answer: "Key subfields include Machine Learning, Deep Learning, Natural Language Processing, and Computer Vision.",
-  },
-  {
-    question: "What is Machine Learning?",
-    answer: "Machine learning is a type of AI that allows systems to learn from data without being explicitly programmed.",
-  },
-  {
-    question: "What are some real-world applications of AI?",
-    answer: "AI is used in areas like self-driving cars, facial recognition, virtual assistants, and medical diagnosis.",
-  },
-  {
-    question: "What is the difference between 'narrow' and 'general' AI?",
-    answer: "Narrow AI is good at specific tasks, while general AI (which doesn't currently exist) would have human-level intelligence across many tasks.",
-  },
-];
+const COUNTDOWN_TIME = 15; // seconds per card
 
-const Flashcard = ({ question, answer }) => {
+const Flashcard = ({ question, answer, onAnswer, onNext, timeLeft }) => {
   const [flipped, setFlipped] = useState(false);
+  const [answered, setAnswered] = useState(false);
+
+  const handleAnswer = (isCorrect) => {
+    setAnswered(true);
+    onAnswer(isCorrect);
+    setTimeout(onNext, 800);
+  };
 
   return (
-    <motion.div
-      className="flashcard"
-      onClick={() => setFlipped(!flipped)}
-      initial={{ rotateY: 0 }}
-      animate={{ rotateY: flipped ? 180 : 0 }}
-      transition={{ duration: 0.6 }}
+    <Box
+      sx={{
+        perspective: '1000px',
+        width: 350,
+        minHeight: 220,
+      }}
     >
-      <Card
-        className={`flashcard-content ${flipped ? "flipped" : ""}`}
+      <Box
+        onClick={() => !answered && setFlipped(!flipped)}
         sx={{
-          width: 250,
-          height: 150,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          perspective: "1000px",
-          cursor: "pointer",
+          width: '100%',
+          minHeight: '100%',
+          position: 'relative',
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.6s',
+          transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+          cursor: 'pointer'
         }}
       >
-        <CardContent
+        {/* Front of card */}
+        <Card
+          elevation={6}
           sx={{
-            position: "absolute",
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            backfaceVisibility: "hidden",
-            transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+            width: '100%',
+            minHeight: '100%',
+            position: 'absolute',
+            backfaceVisibility: 'hidden',
+            borderRadius: 4,
+            background: 'linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)',
           }}
-          className="card-front"
         >
-          <Typography variant="h6" align="center">
-            {question}
-          </Typography>
-        </CardContent>
-        <CardContent
+          <CardContent
+            sx={{
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              padding: 2,
+            }}
+          >
+            <Typography variant="body2" align="center" gutterBottom>
+              Time Left: {timeLeft}s
+            </Typography>
+            <Typography variant="h6" align="center">
+              {question}
+            </Typography>
+          </CardContent>
+        </Card>
+
+        {/* Back of card */}
+        <Card
+          elevation={6}
           sx={{
-            position: "absolute",
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            backfaceVisibility: "hidden",
-            transform: flipped ? "rotateY(0deg)" : "rotateY(180deg)",
-            backgroundColor: "#f5f5f5",
+            width: '100%',
+            minHeight: '100%',
+            position: 'absolute',
+            backfaceVisibility: 'hidden',
+            borderRadius: 4,
+            background: 'linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)',
+            transform: 'rotateY(180deg)',
           }}
-          className="card-back"
         >
-          <Typography variant="body1" align="center">
-            {answer}
-          </Typography>
-        </CardContent>
-      </Card>
-    </motion.div>
+          <CardContent
+            sx={{
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: 2
+            }}
+          >
+            <Typography variant="h6" align="center">
+              {answer}
+            </Typography>
+
+            {/* Approve / Reject Buttons */}
+            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAnswer(false);
+                }}
+                startIcon={<Close />}
+              >
+                Incorrect
+              </Button>
+              <Button
+                variant="contained"
+                color="success"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAnswer(true);
+                }}
+                startIcon={<Check />}
+              >
+                Correct
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    </Box>
   );
 };
 
-const FlashcardsPage = () => {
+const FlashcardsPage = ({ flashcardsData }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(COUNTDOWN_TIME);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (currentIndex < flashcardsData.length) {
+      startTimer();
+    }
+    return () => clearInterval(timerRef.current);
+  }, [currentIndex]);
+
+  const startTimer = () => {
+    clearInterval(timerRef.current);
+    setTimeLeft(COUNTDOWN_TIME);
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          handleAnswer(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleAnswer = (isCorrect) => {
+    let points = 0;
+    if (isCorrect) {
+      points = 5;
+      const bonus = Math.floor(timeLeft / 2);
+      points += bonus;
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      if (newStreak > bestStreak) setBestStreak(newStreak);
+    } else {
+      setStreak(0);
+    }
+    setScore(score + points);
+  };
+
+  const handleNext = () => {
+    if (currentIndex < flashcardsData.length) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentIndex > 0 && currentIndex < flashcardsData.length) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  const resetGame = () => {
+    clearInterval(timerRef.current);
+    setCurrentIndex(0);
+    setScore(0);
+    setStreak(0);
+    setBestStreak(0);
+    setTimeLeft(COUNTDOWN_TIME);
+  };
+
+  if (!flashcardsData || flashcardsData.length === 0) {
+    return <Typography variant="h6" align="center">No flashcards available</Typography>;
+  }
+
+  // Summary Screen
+  if (currentIndex >= flashcardsData.length) {
+    return (
+      <Container>
+        <Box sx={{ textAlign: 'center', mt: 5 }}>
+          <Typography variant="h4" gutterBottom>All cards completed!</Typography>
+          <Typography variant="h5">Final Score: {score}</Typography>
+          <Typography variant="h6" sx={{ mt: 2 }}>Best Streak: {bestStreak}</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={resetGame}
+            sx={{ mt: 3 }}
+          >
+            Start Again
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
+
   return (
     <Container>
-      <Typography variant="h4" align="center" gutterBottom>
-        AI Flashcards
-      </Typography>
-      <Grid container spacing={3} justifyContent="center">
-        {flashcardsData.map((flashcard, index) => (
-          <Grid item key={index}>
-            <Flashcard question={flashcard.question} answer={flashcard.answer} />
+      <Box sx={{ mb: 4, textAlign: 'center' }}>
+        <Typography variant="h4" gutterBottom>Score: {score}</Typography>
+        <Box sx={{ mb: 1 }}>
+          <Chip label={`Streak: ${streak}`} color="primary" sx={{ mr: 1 }} />
+          <Chip label={`Best: ${bestStreak}`} color="secondary" />
+        </Box>
+        <LinearProgress
+          variant="determinate"
+          value={(currentIndex / flashcardsData.length) * 100}
+          sx={{ mb: 2, height: 10, borderRadius: 5 }}
+        />
+        <Typography>Card {currentIndex + 1} of {flashcardsData.length}</Typography>
+      </Box>
+
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+        <ButtonGroup>
+          <IconButton onClick={handlePrevious} disabled={currentIndex === 0}>
+            <NavigateBefore />
+          </IconButton>
+          <IconButton onClick={resetGame}>
+            <Refresh />
+          </IconButton>
+          <IconButton
+            onClick={handleNext}
+            disabled={currentIndex === flashcardsData.length}
+          >
+            <NavigateNext />
+          </IconButton>
+        </ButtonGroup>
+      </Box>
+
+      <AnimatePresence mode="wait">
+        <Grid container justifyContent="center">
+          <Grid item>
+            <Flashcard
+              key={currentIndex}
+              question={flashcardsData[currentIndex].question}
+              answer={flashcardsData[currentIndex].answer}
+              onAnswer={handleAnswer}
+              onNext={handleNext}
+              timeLeft={timeLeft}
+            />
           </Grid>
-        ))}
-      </Grid>
+        </Grid>
+      </AnimatePresence>
     </Container>
   );
 };
