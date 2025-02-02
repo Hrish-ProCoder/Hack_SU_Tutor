@@ -19,7 +19,7 @@ def get_genAI_response(api_key, topic, age, specialized_condition):
     Give response in HTML with applied inline CSS and Bootstrap also."""
 
     # Select the model
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-1.5-pro")
 
     # Generate content using the model and prompt
     try:
