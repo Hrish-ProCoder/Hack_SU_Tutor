@@ -5,6 +5,7 @@ import SearchBar from "../components/SearchBar";
 import Dropdown from "../components/DropDown";
 import { Container, Box } from "@mui/material";
 import { motion } from "framer-motion";
+import axios from 'axios';
 
 const mainTopics = {
   Science: ["Physics", "Biology", "Chemistry", "Astronomy"],
@@ -22,15 +23,18 @@ const HomePage = () => {
   useEffect(() => {console.log("Search term changed:", searchTerm);}, [searchTerm]);
   const handleSearch = (term) => {
     setIsSearchActive(true);
-    const queryParams = new URLSearchParams({
-      search: term,
+    const queryParams = {
+      concept: term,
       filters: selectedSubTopic,
-    }).toString();
+    };
 
-    fetch(`/api/search?${queryParams}`)
-      .then((response) => response.json())
-      .then((data) => console.log("API Response:", data))
-      .catch((error) => console.error("Error fetching search results:", error));
+    axios.post('http://127.0.0.1:5000/generate-flashcards', queryParams)
+      .then((response) => {
+        console.log("API Response:", response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching search results:", error);
+      });
   };
 
   return (

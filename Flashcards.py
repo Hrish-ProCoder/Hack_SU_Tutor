@@ -1,9 +1,10 @@
 import google.generativeai as genai
 import json
-
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 def generate_flashcards_gemini(concept, num_flashcards=5):
     prompt = f"""
@@ -11,7 +12,7 @@ def generate_flashcards_gemini(concept, num_flashcards=5):
     Each flashcard should have a question and a concise answer.
     Format the response as a JSON array with the following structure:
 
-    [
+    Some examples of questions: [
       {{
         "question": "What is {concept}?",
         "answer": "A brief but clear explanation of {concept}."
