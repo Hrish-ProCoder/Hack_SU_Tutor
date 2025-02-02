@@ -2,6 +2,7 @@ import google.generativeai as genai
 import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from explain_api import get_genAI_response
 
 app = Flask(__name__)
 CORS(app)
@@ -55,6 +56,28 @@ def generate_flashcards_endpoint():
     # Generate flashcards using the provided concept
     flashcards = generate_flashcards_gemini(concept, num_flashcards)
     return jsonify(flashcards)
+# Example POST endpoint to handle incoming requests
+@app.route('/generate-explaination', methods=['POST'])
+def post_endpoint():
+    # Get JSON data from the request
+    data = request.get_json()
+
+    # Extract values for 'topic', 'age', and 'specialized_condition' from the request body
+    topic = data.get('topic', '')
+    age = data.get('skillLevel', '')
+    language = data.get('language', '')
+    specialized_condition = data.get('domain', '')
+
+    # Get the response from the GenAI model using the provided inputs
+    api_key = "AIzaSyCjNehMJxd24hmEr5g_E8d6EiDGLTg51eU"  # Replace with your actual API key
+    response = get_genAI_response(api_key, topic, age,language, specialized_condition)
+
+    # Return the AI response as a JSON object
+    if response:
+        return jsonify({"genAI_response": response}), 200
+    else:
+        return jsonify({"error": "Failed to generate response"}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
